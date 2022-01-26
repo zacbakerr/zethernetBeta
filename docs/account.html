@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js" integrity="sha512-hI8jEOQLtyzkIiWVygLAcKPradIhgXQUl8I3lk2FUmZ8sZNbSSdHHrWo5mrmsW1Aex+oFZ+UUK7EJTVwyjiFLA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Exo+2&family=Montserrat:wght@700&family=Open+Sans:ital,wght@0,300;1,400;1,700&display=swap" rel="stylesheet"> 
+       <style>
+        body {
+          background-color: #002641;
+          height: 500px;
+        }
+
+        img, canvas {
+          display: inline-block;
+          margin: 10px;
+        }
+       </style>
+    </head>
+    <body>
+        <script>
+            // (A) GET FROM SESSION
+            var accountForPage = sessionStorage.getItem("account")
+            //var ensDomainForPage = sessionStorage.getItem("ensDomain")
+
+            const rpcURL = "https://mainnet.infura.io/v3/806cec3c4a1143cd8deaf3f3dc239ace"
+            const web3 = new Web3(rpcURL);
+            var BN = web3.utils.BN;
+            //const ethPrice = require('eth-price');
+
+            const showAccount = document.querySelector('.showAccount');
+
+            function searchSpecific(number, type) {
+              fetch('https://api.etherscan.io/api?module=account&action=txlist&address=' + accountForPage + '&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=CGC1Z1BUWH3VEGK6HY9WK1Y4WZY8YAZFC6')
+              .then((response) => {
+                response.json().then((data) => { 
+                    return data.result;
+                }).then((data) => {
+                  var length = data.length;
+                  if (length < 10) {
+                    alert("We've encountered a bug with this address and are working on a fix. Check back later!")
+                  }
+                  console.log(number)
+                  console.log(type)
+                  if (type == "from") {
+                    var from = data[number].from
+                    return data[number].from;
+                  } else if (type == 'to') {
+                    console.log(data[number].to)
+                    return data[number].to;
+                  } else if (type == "hash") {
+                    console.log(data[number].hash)
+                    return data[number].hash;
+                  } else if (type == "block") {
+                    console.log(data[number].blockNumber);
+                    return data[number].blockNumber;
+                  }
+                }).then((data) => {
+                  var search = data;
+                  console.log(data)
+                  if (search.substring(0, 2) == "0x" && search.length == 42) {
+                    storeAccount(search, "null");
+                  } else if (search.substring(0, 2) == "0x" && search.length == 66) {
+                    storeTXNHash(search);
+                  } else if (search.substring(search.length-4, search.length) == ".eth") {       
+                    web3.eth.ens.getOwner(search).then(value => {
+                      storeAccount(value, search);
+                    });
+                  } else if (search.length < 9) {
+                    storeBlockNumber(search);
+                  } else {
+                    console.log("Error");
+                  }
+                });
+              });
+            }
+
+            function search() {
+              var search = document.getElementById('example').value;
+              if (search.substring(0, 2) == "0x" && search.length == 42) {
+                storeAccount(search, "null");
+              } else if (search.substring(0, 2) == "0x" && search.length == 66) {
+                storeTXNHash(search);
+              } else if (search.substring(search.length-4, search.length) == ".eth") {       
+                web3.eth.ens.getOwner(search).then(value => {
+                  storeAccount(value, search);
+                });
+              } else if (search.length < 9) {
+                storeBlockNumber(search);
+              } else {
+                console.log("Error");
+              }
+            }
+
+            async function getAccount() {
+                accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                const account = accounts[0];
+                const shown = account.substring(0, 6) + "..." + account.substring(account.length - 4, account.length);
+                console.log(shown);
+                showAccount.innerHTML = shown;
+            }
+
+            web3.eth.getBalance(accountForPage).then(value => {
+                document.getElementById('accountForPage').innerHTML = web3.utils.fromWei(value, 'ether');;
+            });
+
+            function storeAccount(address, ensDomain) {
+              var account = address;
+              var domain = ensDomain;
+
+              sessionStorage.setItem("account", account);
+              sessionStorage.setItem("ensDomain", domain);
+              location.href = "account.html";
+            }
+
+            function storeTXNHash(search) {
+              var txnHash = search;
+              console.log(txnHash)
+              sessionStorage.setItem("txnHash", txnHash);
+              location.href = "txn.html";
+            }
+
+            function storeBlockNumber(blockNumber) {
+              var block = blockNumber;
+              sessionStorage.setItem("block", block);
+              location.href = "block.html";
+            }
+
+            fetch('https://api.etherscan.io/api?module=account&action=txlist&address=' + accountForPage + '&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=CGC1Z1BUWH3VEGK6HY9WK1Y4WZY8YAZFC6')
+            .then((response) => {
+                response.json().then((data) => { 
+                    return data.result;
+                }).then((data) => {
+                  var length = data.length;
+                  if (length < 10) {
+                    alert("We've encountered a bug with this address and are working on a fix. Check back later!")
+                  }
+                  var to1 = data[9].to.substring(0, 6) + "..." + data[9].to.substring(data[9].to.length-4, data[9].to.length); 
+                  var from1 = data[9].from.substring(0, 6) + "..." + data[9].from.substring(data[9].from.length-4, data[9].from.length);
+                  var txnHash1 = data[9].hash.substring(0, 8) + "..." + data[9].hash.substring(data[9].hash.length-6, data[9].hash.length);
+                  var value1 = data[9].value;
+                  var block1 = data[9].blockNumber;
+
+                  var timeStamp1 = data[9].timeStamp;
+                  const milliseconds1 = timeStamp1 * 1000
+                  const dateObject1 = new Date(milliseconds1)
+                  const humanDateFormat1 = dateObject1.toLocaleString()
+
+                  var to2 = data[8].to.substring(0, 6) + "..." + data[8].to.substring(data[8].to.length-4, data[8].to.length); 
+                  var from2 = data[8].from.substring(0, 6) + "..." + data[8].from.substring(data[8].from.length-4, data[8].from.length);
+                  var txnHash2 = data[8].hash.substring(0, 8) + "..." + data[8].hash.substring(data[8].hash.length-6, data[8].hash.length);
+                  var value2 = data[8].value;
+                  var block2 = data[8].blockNumber;
+
+                  var timeStamp2 = data[8].timeStamp;
+                  const milliseconds2 = timeStamp2 * 1000
+                  const dateObject2 = new Date(milliseconds2)
+                  const humanDateFormat2 = dateObject2.toLocaleString()
+
+                  var to3 = data[7].to.substring(0, 6) + "..." + data[7].to.substring(data[7].to.length-4, data[7].to.length); 
+                  var from3 = data[7].from.substring(0, 6) + "..." + data[7].from.substring(data[7].from.length-4, data[7].from.length);
+                  var txnHash3 = data[7].hash.substring(0, 8) + "..." + data[7].hash.substring(data[7].hash.length-6, data[7].hash.length);
+                  var value3 = data[7].value;
+                  var block3 = data[7].blockNumber;
+
+                  var timeStamp3 = data[7].timeStamp;
+                  const milliseconds3 = timeStamp3 * 1000
+                  const dateObject3 = new Date(milliseconds3)
+                  const humanDateFormat3 = dateObject3.toLocaleString()
+
+                  var to4 = data[6].to.substring(0, 6) + "..." + data[6].to.substring(data[6].to.length-4, data[6].to.length); 
+                  var from4 = data[6].from.substring(0, 6) + "..." + data[6].from.substring(data[6].from.length-4, data[6].from.length);
+                  var txnHash4 = data[6].hash.substring(0, 8) + "..." + data[6].hash.substring(data[6].hash.length-6, data[6].hash.length);
+                  var value4 = data[6].value;
+                  var block4 = data[6].blockNumber;
+
+                  var timeStamp4 = data[6].timeStamp;
+                  const milliseconds4 = timeStamp4 * 1000
+                  const dateObject4 = new Date(milliseconds4)
+                  const humanDateFormat4 = dateObject4.toLocaleString()
+
+                  var to5 = data[5].to.substring(0, 6) + "..." + data[5].to.substring(data[5].to.length-4, data[5].to.length); 
+                  var from5 = data[5].from.substring(0, 6) + "..." + data[5].from.substring(data[5].from.length-4, data[5].from.length);
+                  var txnHash5 = data[5].hash.substring(0, 8) + "..." + data[5].hash.substring(data[5].hash.length-6, data[5].hash.length);
+                  var value5 = data[5].value;
+                  var block5 = data[5].blockNumber;
+
+                  var timeStamp5 = data[5].timeStamp;
+                  const milliseconds5 = timeStamp5 * 1000
+                  const dateObject5 = new Date(milliseconds5)
+                  const humanDateFormat5 = dateObject5.toLocaleString()
+
+                  var to6 = data[4].to.substring(0, 6) + "..." + data[4].to.substring(data[4].to.length-4, data[4].to.length); 
+                  var from6 = data[4].from.substring(0, 6) + "..." + data[4].from.substring(data[4].from.length-4, data[4].from.length);
+                  var txnHash6 = data[4].hash.substring(0, 8) + "..." + data[4].hash.substring(data[4].hash.length-6, data[4].hash.length);
+                  var value6 = data[4].value;
+                  var block6 = data[4].blockNumber;
+
+                  var timeStamp6 = data[4].timeStamp;
+                  const milliseconds6 = timeStamp6 * 1000
+                  const dateObject6 = new Date(milliseconds6)
+                  const humanDateFormat6 = dateObject6.toLocaleString()
+
+                  var to7 = data[3].to.substring(0, 6) + "..." + data[3].to.substring(data[3].to.length-4, data[3].to.length); 
+                  var from7 = data[3].from.substring(0, 6) + "..." + data[3].from.substring(data[3].from.length-4, data[3].from.length);
+                  var txnHash7 = data[3].hash.substring(0, 8) + "..." + data[3].hash.substring(data[3].hash.length-6, data[3].hash.length);
+                  var value7 = data[3].value;
+                  var block7 = data[3].blockNumber;
+
+                  var timeStamp7 = data[3].timeStamp;
+                  const milliseconds7 = timeStamp7 * 1000
+                  const dateObject7 = new Date(milliseconds7)
+                  const humanDateFormat7 = dateObject7.toLocaleString()
+
+                  var to8 = data[2].to.substring(0, 6) + "..." + data[2].to.substring(data[2].to.length-4, data[2].to.length); 
+                  var from8 = data[2].from.substring(0, 6) + "..." + data[2].from.substring(data[2].from.length-4, data[2].from.length);
+                  var txnHash8 = data[2].hash.substring(0, 8) + "..." + data[2].hash.substring(data[2].hash.length-6, data[2].hash.length);
+                  var value8 = data[2].value;
+                  var block8 = data[2].blockNumber;
+
+                  var timeStamp8 = data[2].timeStamp;
+                  const milliseconds8 = timeStamp8 * 1000
+                  const dateObject8 = new Date(milliseconds8)
+                  const humanDateFormat8 = dateObject8.toLocaleString()
+
+                  var to9 = data[1].to.substring(0, 6) + "..." + data[1].to.substring(data[1].to.length-4, data[1].to.length); 
+                  var from9 = data[1].from.substring(0, 6) + "..." + data[1].from.substring(data[1].from.length-4, data[1].from.length);
+                  var txnHash9 = data[1].hash.substring(0, 8) + "..." + data[1].hash.substring(data[1].hash.length-6, data[1].hash.length);
+                  var value9 = data[1].value;
+                  var block9 = data[1].blockNumber;
+
+                  var timeStamp9 = data[1].timeStamp;
+                  const milliseconds9 = timeStamp9 * 1000
+                  const dateObject9 = new Date(milliseconds9)
+                  const humanDateFormat9 = dateObject9.toLocaleString()
+
+                  var to10 = data[0].to.substring(0, 6) + "..." + data[0].to.substring(data[0].to.length-4, data[0].to.length); 
+                  var from10 = data[0].from.substring(0, 6) + "..." + data[0].from.substring(data[0].from.length-4, data[0].from.length);
+                  var txnHash10 = data[0].hash.substring(0, 8) + "..." + data[0].hash.substring(data[0].hash.length-6, data[0].hash.length);
+                  var value10 = data[0].value;
+                  var block10 = data[0].blockNumber;
+
+                  var timeStamp10 = data[0].timeStamp;
+                  const milliseconds10 = timeStamp10 * 1000
+                  const dateObject10 = new Date(milliseconds10)
+                  const humanDateFormat10 = dateObject10.toLocaleString()
+
+                  return [to1, from1, txnHash1, value1, block1, humanDateFormat1, to2, from2, txnHash2, value2, block2, humanDateFormat2, to3, from3, txnHash3, value3, block3, humanDateFormat3, to4, from4, txnHash4, value4, block4, humanDateFormat4, to5, from5, txnHash5, value5, block5, humanDateFormat5, to6, from6, txnHash6, value6, block6, humanDateFormat6, to7, from7, txnHash7, value7, block7, humanDateFormat7, to8, from8, txnHash8, value8, block8, humanDateFormat8, to9, from9, txnHash9, value9, block9, humanDateFormat9, to10, from10, txnHash10, value10, block10, humanDateFormat10];
+                }).then(value => {
+                document.getElementById('toAddressOne').innerHTML = value[54];
+                document.getElementById('fromAddressOne').innerHTML = value[55];
+                document.getElementById('txnHashOne').innerHTML = value[56]
+                document.getElementById('valueOne').innerHTML = web3.utils.fromWei(value[57], 'ether') + ' Ether';
+                document.getElementById('blockOne').innerHTML = value[58];
+                document.getElementById('timeStampOne').innerHTML = value[59];
+
+                document.getElementById('toAddressTwo').innerHTML = value[48];
+                document.getElementById('fromAddressTwo').innerHTML = value[49];
+                document.getElementById('txnHashTwo').innerHTML = value[50]
+                document.getElementById('valueTwo').innerHTML = web3.utils.fromWei(value[51], 'ether') + ' Ether';
+                document.getElementById('blockTwo').innerHTML = value[52];
+                document.getElementById('timeStampTwo').innerHTML = value[53];
+
+                document.getElementById('toAddressThree').innerHTML = value[42];
+                document.getElementById('fromAddressThree').innerHTML = value[43];
+                document.getElementById('txnHashThree').innerHTML = value[44]
+                document.getElementById('valueThree').innerHTML = web3.utils.fromWei(value[45], 'ether') + ' Ether';
+                document.getElementById('blockThree').innerHTML = value[46];
+                document.getElementById('timeStampThree').innerHTML = value[47];
+
+                document.getElementById('toAddressFour').innerHTML = value[36];
+                document.getElementById('fromAddressFour').innerHTML = value[37];
+                document.getElementById('txnHashFour').innerHTML = value[38]
+                document.getElementById('valueFour').innerHTML = web3.utils.fromWei(value[39], 'ether') + ' Ether';
+                document.getElementById('blockFour').innerHTML = value[40]
+                document.getElementById('timeStampFour').innerHTML = value[41];
+
+                document.getElementById('toAddressFive').innerHTML = value[30];
+                document.getElementById('fromAddressFive').innerHTML = value[31];
+                document.getElementById('txnHashFive').innerHTML = value[32]
+                document.getElementById('valueFive').innerHTML = web3.utils.fromWei(value[33], 'ether') + ' Ether';
+                document.getElementById('blockFive').innerHTML = value[34];
+                document.getElementById('timeStampFive').innerHTML = value[35];
+
+                document.getElementById('toAddressSix').innerHTML = value[24];
+                document.getElementById('fromAddressSix').innerHTML = value[25];
+                document.getElementById('txnHashSix').innerHTML = value[26]
+                document.getElementById('valueSix').innerHTML = web3.utils.fromWei(value[27], 'ether') + ' Ether';
+                document.getElementById('blockSix').innerHTML = value[28];
+                document.getElementById('timeStampSix').innerHTML = value[29];
+
+                document.getElementById('toAddressSeven').innerHTML = value[18];
+                document.getElementById('fromAddressSeven').innerHTML = value[19];
+                document.getElementById('txnHashSeven').innerHTML = value[20]
+                document.getElementById('valueSeven').innerHTML = web3.utils.fromWei(value[21], 'ether') + ' Ether';
+                document.getElementById('blockSeven').innerHTML = value[22];
+                document.getElementById('timeStampSeven').innerHTML = value[23];
+
+                document.getElementById('toAddressEight').innerHTML = value[12];
+                document.getElementById('fromAddressEight').innerHTML = value[13];
+                document.getElementById('txnHashEight').innerHTML = value[14]
+                document.getElementById('valueEight').innerHTML = web3.utils.fromWei(value[15], 'ether') + ' Ether';
+                document.getElementById('blockEight').innerHTML = value[16];
+                document.getElementById('timeStampEight').innerHTML = value[17];
+
+                document.getElementById('toAddressNine').innerHTML = value[6];
+                document.getElementById('fromAddressNine').innerHTML = value[7];
+                document.getElementById('txnHashNine').innerHTML = value[8]
+                document.getElementById('valueNine').innerHTML = web3.utils.fromWei(value[9], 'ether') + ' Ether';
+                document.getElementById('blockNine').innerHTML = value[10];
+                document.getElementById('timeStampNine').innerHTML = value[11];
+
+                document.getElementById('toAddressTen').innerHTML = value[0];
+                document.getElementById('fromAddressTen').innerHTML = value[1];
+                document.getElementById('txnHashTen').innerHTML = value[2]
+                document.getElementById('valueTen').innerHTML = web3.utils.fromWei(value[3], 'ether') + ' Ether';
+                document.getElementById('blockTen').innerHTML = value[4];
+                document.getElementById('timeStampTen').innerHTML = value[5];
+            });
+            })
+            .catch((err) => { console.log('error') });
+
+            fetch('https://api.etherscan.io/api?module=account&action=getminedblocks&address=' + accountForPage + '&blocktype=blocks&page=1&offset=10&apikey=CGC1Z1BUWH3VEGK6HY9WK1Y4WZY8YAZFC6')
+            .then((response) => {
+                response.json().then((data) => { 
+                    return data.result;
+                })
+            })
+            .catch((err) => { console.log('error') });
+            </script>
+        
+        <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #002139;">
+          <div class="container-fluid">
+            <a class="navbar-brand" href="zethernet.html" style="color: #0088c8;">
+              <img src="logo.svg" alt="" width="20" height="27" class="d-inline-block">
+              Zethernet
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav">
+                <li class="nav-item">
+                  <a class="nav-link active" aria-current="page" href="#" style="color: #0088c8;">Home</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#" style="color: #9ab7be;">About</a>
+                </li>
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #9ab7be;">
+                    Dropdown
+                  </a>
+                  <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="convert.html">Convert ETH Values</a></li>
+                    <li><a class="dropdown-item" href="#">Another action</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">Something else here</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+            <form class="d-flex" onsubmit="return false;">
+              <div>
+                <input id="example" style="width: 440px;" class="form-control me-2" type="search" placeholder="Search by Address, ENS, Txn Hash, Signature, Block..." onsubmit="return false;">
+              </div>
+              <button class="btn btn-secondary" onclick="search();">Search</button>
+    
+            </form>
+            <!-- <div style="padding-left: 25px;" ></div>
+              <div id="metaMaskConnection">
+                <button class="btn btn-primary enableEthereumButton btn" type="submit" style="width: 175px;">Connect Metamask</button>
+              </div> -->
+          </div>
+        </nav>
+
+      <div class="card border-primary mb-3" style="width: 530px; max-height: 350px; background-color: #002641; top: 20px; left: 20px;">
+        <div class="row g-0">
+          <div class="col-md-2">
+            <div id="blocky"></div>
+          </div>
+          <div class="col-md-8">
+            <div class="card-body" style="width: 530px;">
+                <p class="showAccount" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></p> <p id="ensDomain" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></p>
+            </div>
+          </div>
+        </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-xs-6">
+                        <h6 style="color: #748b92; font-family: 'Montserrat', sans-serif;">Ether Balance:</h6>
+                    </div>
+                    <div class="col-xs-6">
+                        <h3 id="accountForPage" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></h3>
+                    </div>
+                </div>
+            </div>
+      </div>
+
+
+      <div class="card border-primary mb-3" style="width: 1400px; height: 530px; background-color: #002641; top: 20px; left: 20px;">
+            <div class="card-body" style="width: 1000px;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-xs-6">
+                        </div>
+                        <div class="col-xs-6">
+                            <h3 id="accountForPage" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></h3>
+                        </div>
+                    </div>
+                </div>
+                <h5 style="color: #9ab7be; font-family: 'Montserrat', sans-serif;">Recent Transactions:</h5>
+                <table class="table table-hover" style="width: 1365px;">
+                  <tbody>
+                    <tr>
+                      <th scope="col" style="color: #9ab7be;">To</th>
+                      <th scope="col" style="color: #9ab7be;">From</th>
+                      <th scope="col" style="color: #9ab7be;">Txn Hash</th>
+                      <th scope="col" style="color: #9ab7be;">Value</th>
+                      <th scope="col" style="color: #9ab7be;">Block</th>
+                      <th scope="col" style="color: #9ab7be;">Time Stamp</th>
+                    </tr>
+                    <tr>
+                      <td style="color: #9ab7be;" id="toAddressOne" onclick="searchSpecific(0, 'to')"></td>
+                      <td style="color: #9ab7be;" id="fromAddressOne" onclick="searchSpecific(0, 'from')"></td>
+                      <td style="color: #9ab7be;" id="txnHashOne" onclick="searchSpecific(0, 'hash')"></td>
+                      <td style="color: #9ab7be;" id="valueOne"></td>
+                      <td style="color: #9ab7be;" id="blockOne" onclick="searchSpecific(0, 'block')"></td>
+                      <td style="color: #9ab7be;" id="timeStampOne"></td>
+                    </tr>
+                    <tr>
+                      <td style="color: #9ab7be;" id="toAddressTwo" onclick="searchSpecific(1, 'to')"></td>
+                      <td style="color: #9ab7be;" id="fromAddressTwo" onclick="searchSpecific(1, 'from')"></td>
+                      <td style="color: #9ab7be;" id="txnHashTwo" onclick="searchSpecific(1, 'hash')"></td>
+                      <td style="color: #9ab7be;" id="valueTwo"></td>
+                      <td style="color: #9ab7be;" id="blockTwo" onclick="searchSpecific(1, 'block')"></td>
+                      <td style="color: #9ab7be;" id="timeStampTwo"></td>
+                    </tr>
+                    <tr>
+                      <td style="color: #9ab7be;" id="toAddressThree" onclick="searchSpecific(2, 'to')"></td>
+                      <td style="color: #9ab7be;" id="fromAddressThree" onclick="searchSpecific(2, 'from')"></td>
+                      <td style="color: #9ab7be;" id="txnHashThree" onclick="searchSpecific(2, 'hash')"></td>
+                      <td style="color: #9ab7be;" id="valueThree"></td>
+                      <td style="color: #9ab7be;" id="blockThree" onclick="searchSpecific(2, 'block')"></td>
+                      <td style="color: #9ab7be;" id="timeStampThree"></td>
+                    </tr>
+                    <tr>
+                      <td style="color: #9ab7be;" id="toAddressFour" onclick="searchSpecific(3, 'to')"></td>
+                      <td style="color: #9ab7be;" id="fromAddressFour" onclick="searchSpecific(3, 'from')"></td>
+                      <td style="color: #9ab7be;" id="txnHashFour" onclick="searchSpecific(3, 'hash')"></td>
+                      <td style="color: #9ab7be;" id="valueFour"></td>
+                      <td style="color: #9ab7be;" id="blockFour" onclick="searchSpecific(3, 'block')"></td>
+                      <td style="color: #9ab7be;" id="timeStampFour"></td>
+                    </tr>
+                    <tr>
+                      <td style="color: #9ab7be;" id="toAddressFive" onclick="searchSpecific(4, 'to')"></td>
+                      <td style="color: #9ab7be;" id="fromAddressFive" onclick="searchSpecific(4, 'from')"></td>
+                      <td style="color: #9ab7be;" id="txnHashFive" onclick="searchSpecific(4, 'hash')"></td>
+                      <td style="color: #9ab7be;" id="valueFive"></td>
+                      <td style="color: #9ab7be;" id="blockFive" onclick="searchSpecific(4, 'block')"></td>
+                      <td style="color: #9ab7be;" id="timeStampFive"></td>
+                    </tr>
+                    <tr>
+                      <td style="color: #9ab7be;" id="toAddressSix" onclick="searchSpecific(5, 'to')"></td>
+                      <td style="color: #9ab7be;" id="fromAddressSix" onclick="searchSpecific(5, 'from')"></td>
+                      <td style="color: #9ab7be;" id="txnHashSix" onclick="searchSpecific(5, 'hash')"></td>
+                      <td style="color: #9ab7be;" id="valueSix"></td>
+                      <td style="color: #9ab7be;" id="blockSix" onclick="searchSpecific(5, 'block')"></td>
+                      <td style="color: #9ab7be;" id="timeStampSix"></td>
+                    </tr>
+                    <tr>
+                      <td style="color: #9ab7be;" id="toAddressSeven" onclick="searchSpecific(6, 'to')"></td>
+                      <td style="color: #9ab7be;" id="fromAddressSeven" onclick="searchSpecific(6, 'from')"></td>
+                      <td style="color: #9ab7be;" id="txnHashSeven" onclick="searchSpecific(6, 'hash')"></td>
+                      <td style="color: #9ab7be;" id="valueSeven"></td>
+                      <td style="color: #9ab7be;" id="blockSeven" onclick="searchSpecific(6, 'block')"></td>
+                      <td style="color: #9ab7be;" id="timeStampSeven"></td>
+                    </tr>
+                    <tr>
+                      <td style="color: #9ab7be;" id="toAddressEight" onclick="searchSpecific(7, 'to')"></td>
+                      <td style="color: #9ab7be;" id="fromAddressEight" onclick="searchSpecific(7, 'from')"></td>
+                      <td style="color: #9ab7be;" id="txnHashEight" onclick="searchSpecific(7, 'hash')"></td>
+                      <td style="color: #9ab7be;" id="valueEight"></td>
+                      <td style="color: #9ab7be;" id="blockEight" onclick="searchSpecific(7, 'block')"></td>
+                      <td style="color: #9ab7be;" id="timeStampEight"></td>
+                    </tr>
+                    <tr>
+                      <td style="color: #9ab7be;" id="toAddressNine" onclick="searchSpecific(8, 'to')"></td>
+                      <td style="color: #9ab7be;" id="fromAddressNine" onclick="searchSpecific(8, 'from')"></td>
+                      <td style="color: #9ab7be;" id="txnHashNine" onclick="searchSpecific(8, 'hash')"></td>
+                      <td style="color: #9ab7be;" id="valueNine"></td>
+                      <td style="color: #9ab7be;" id="blockNine" onclick="searchSpecific(8, 'block')"></td>
+                      <td style="color: #9ab7be;" id="timeStampNine"></td>
+                    </tr>
+                    <tr>
+                      <td style="color: #9ab7be;" id="toAddressTen" onclick="searchSpecific(9, 'to')"></td>
+                      <td style="color: #9ab7be;" id="fromAddressTen" onclick="searchSpecific(9, 'from')"></td>
+                      <td style="color: #9ab7be;" id="txnHashTen" onclick="searchSpecific(9, 'hash')"></td>
+                      <td style="color: #9ab7be;" id="valueTen"></td>
+                      <td style="color: #9ab7be;" id="blockTen" onclick="searchSpecific(9, 'block')"></td>
+                      <td style="color: #9ab7be;" id="timeStampTen"></td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+      </div>
+      
+      <script type="module">
+
+        var accountForPage = sessionStorage.getItem("account")
+
+        const rpcURL = "https://mainnet.infura.io/v3/806cec3c4a1143cd8deaf3f3dc239ace"
+        const web3 = new Web3(rpcURL);
+        var BN = web3.utils.BN;
+
+        const ethereumButton = document.querySelector('.enableEthereumButton');
+        const sendEthButton = document.querySelector('.sendEthButton');
+
+        const showAccount = document.querySelector('.showAccount');
+
+        let accounts = [];
+
+       
+        //const shown = accountForPage.substring(0, 6) + "..." + accountForPage.substring(accountForPage.length - 4, accountForPage.length);
+        const shown = accountForPage;
+        //console.log(shown);
+
+        import { createIcon } from './blockies.mjs';
+
+        const addresses = [
+            accountForPage
+        ];
+        
+        const seed = addresses[0].toLowerCase();
+
+        const canvas = createIcon({
+          seed,
+          size: 9,
+          scale: 8
+        });
+        function getImage() {
+          document.getElementById("blocky").appendChild(canvas)
+        }
+
+        getImage();
+        showAccount.innerHTML = shown;
+        
+    </script>
+    <script>
+      var ensDomainForPage = sessionStorage.getItem("ensDomain")
+
+      if (ensDomainForPage == "null") {
+        document.getElementById("ensDomain").innerHTML = "ENS Implementation coming soon!";
+      } else if (ensDomainForPage != "null") {
+        document.getElementById("ensDomain").innerHTML = ensDomainForPage;
+      }
+    </script>
+        </body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js" integrity="sha512-hI8jEOQLtyzkIiWVygLAcKPradIhgXQUl8I3lk2FUmZ8sZNbSSdHHrWo5mrmsW1Aex+oFZ+UUK7EJTVwyjiFLA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Exo+2&family=Montserrat:wght@700&family=Open+Sans:ital,wght@0,300;1,400;1,700&display=swap" rel="stylesheet"> 
+       <style>
+        body {
+          background-color: #002641;
+          height: 500px;
+        }
+
+        img, canvas {
+          display: inline-block;
+          margin: 10px;
+        }
+       </style>
+    </head>
+    <body>
+        <script>
+            var txnHash = sessionStorage.getItem("txnHash")
+
+            const rpcURL = "https://mainnet.infura.io/v3/806cec3c4a1143cd8deaf3f3dc239ace"
+            const web3 = new Web3(rpcURL);
+            var BN = web3.utils.BN;
+            //const ethPrice = require('eth-price');
+
+            const showAccount = document.querySelector('.showAccount');
+
+            function search() {
+              var search = document.getElementById('example').value;
+              if (search.substring(0, 2) == "0x" && search.length == 42) {
+                storeAccount(search, "null");
+              } else if (search.substring(0, 2) == "0x" && search.length == 66) {
+                storeTXNHash();
+              } else if (search.substring(search.length-4, search.length) == ".eth") {       
+                web3.eth.ens.getOwner(search).then(value => {
+                  storeAccount(value, search);
+                });
+              } else if (search.length < 9) {
+                storeBlockNumber(search);
+              } else {
+                console.log("Error");
+              }
+            }
+
+            function storeAccount(address, ensDomain) {
+              var account = address;
+              var domain = ensDomain;
+
+              sessionStorage.setItem("account", account);
+              sessionStorage.setItem("ensDomain", domain);
+              location.href = "account.html";
+            }
+
+            function storeTXNHash() {
+              var txnHash = document.getElementById('example').value;
+              sessionStorage.setItem("txnHash", txnHash);
+              location.href = "txn.html";
+            }
+
+            function storeBlockNumber(blockNumber) {
+              var block = blockNumber;
+              sessionStorage.setItem("block", block);
+              location.href = "block.html";
+            }
+
+                web3.eth.getTransaction(txnHash).then(value => {
+                  console.log(value);
+                  var block = value.blockNumber;
+                  var to = value.to;
+                  var from = value.from;
+                  var etherValue = value.value;
+                  var gasPrice = value.gasPrice;
+                  var gasPriceBN = new BN(gasPrice).toString();
+
+                  document.getElementById('gasPrice').innerHTML = web3.utils.fromWei(gasPriceBN, 'gwei') + ' Gwei';
+
+                  return [block, to, from, etherValue]
+                }).then(value => {
+                  document.getElementById('block').innerHTML = value[0];
+                  document.getElementById('to').innerHTML = value[1];
+                  document.getElementById('from').innerHTML = value[2];
+                  document.getElementById('value').innerHTML = web3.utils.fromWei(value[3], 'ether') + ' Ether';
+                  fetch('https://api.etherscan.io/api?module=block&action=getblockreward&blockno=' + value[0] + '&apikey=CGC1Z1BUWH3VEGK6HY9WK1Y4WZY8YAZFC6').then(response => response.json()).then(data => {
+                    var timeStamp = data.result.timeStamp;
+                    const milliseconds = timeStamp * 1000
+                    const dateObject = new Date(milliseconds)
+                    const humanDateFormat = dateObject.toLocaleString()
+                    document.getElementById('timeStamp').innerHTML = humanDateFormat;
+                  });
+                })
+        </script>
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #002139;">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="zethernet.html" style="color: #0088c8;">
+          <img src="logo.svg" alt="" width="20" height="27" class="d-inline-block">
+          Zethernet
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="#" style="color: #0088c8;">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" style="color: #9ab7be;">About</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #9ab7be;">
+                Dropdown
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li><a class="dropdown-item" href="signrecover.html">Convert ETH Values</a></li>
+                <li><a class="dropdown-item" href="#">Another action</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#">Something else here</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <form class="d-flex" onsubmit="return false;">
+          <div>
+            <input id="example" style="width: 440px;" class="form-control me-2" type="search" placeholder="Search by Address, ENS, Txn Hash, Signature, Block..." onsubmit="return false;">
+          </div>
+          <button class="btn btn-secondary" onclick="search();">Search</button>
+
+        </form>
+        <!-- <div style="padding-left: 25px;" ></div>
+          <div id="metaMaskConnection">
+            <button class="btn btn-primary enableEthereumButton btn" type="submit" style="width: 175px;">Connect Metamask</button>
+          </div> -->
+      </div>
+    </nav>
+          <center>
+          <div class="card border-primary mb-3" style="width: 1175px; height: 555px; background-color: #002641; top: 70px; left: 20px;">
+            <div class="row g-0">
+              <div class="col-md-1">
+                <div class="card-body" style="width: 1175px;">
+                  <div class="row">
+                    <div class="col-xs-6">
+                        <h6 style="color: #748b92; font-family: 'Montserrat', sans-serif;">TXN Hash:</h6>
+                    </div>
+                    <div class="col-xs-6">
+                        <h3 id="txnHashForPage" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></h3>
+                    </div>
+                    <br>
+                    <br>
+                    <div class="col-xs-6">
+                      <h6 style="color: #748b92; font-family: 'Montserrat', sans-serif;">To:</h6>
+                  </div>
+                  <div class="col-xs-6">
+                      <h3 id="to" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></h3>
+                  </div>
+                  <br>
+                  <br>
+                  <div class="col-xs-6">
+                    <h6 style="color: #748b92; font-family: 'Montserrat', sans-serif;">From:</h6>
+                </div>
+                <div class="col-xs-6">
+                    <h3 id="from" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></h3>
+                </div>
+                <br>
+                <br>
+                <div class="col-xs-6">
+                  <h6 style="color: #748b92; font-family: 'Montserrat', sans-serif;">Block:</h6>
+              </div>
+                <div class="col-xs-6">
+                    <h3 id="block" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></h3>
+                </div>
+                <br>
+                <br>
+                <div class="col-xs-6">
+                  <h6 style="color: #748b92; font-family: 'Montserrat', sans-serif;">Value:</h6>
+                </div>
+                <div class="col-xs-6">
+                    <h3 id="value" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></h3>
+                </div>
+                <br>
+                <br>
+                <div class="col-xs-6">
+                  <h6 style="color: #748b92; font-family: 'Montserrat', sans-serif;">Gas Price:</h6>
+                </div>
+                <div class="col-xs-6">
+                    <h3 id="gasPrice" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></h3>
+                </div>
+                <br>
+                <br>
+                  <div class="col-xs-6">
+                  <h6 style="color: #748b92; font-family: 'Montserrat', sans-serif;">Time Stamp:</h6>
+                </div>
+                <div class="col-xs-6">
+                    <h3 id="timeStamp" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></h3>
+                </div>
+                </div>
+                </div>
+              </div>
+            </div>
+                <div class="container">
+
+                </div>
+          </div>
+        </center>
+          <script>
+             var txnHash = sessionStorage.getItem("txnHash")
+            document.getElementById("txnHashForPage").innerHTML = txnHash;
+          </script>
+    </body>
+</html>

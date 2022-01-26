@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js" integrity="sha512-hI8jEOQLtyzkIiWVygLAcKPradIhgXQUl8I3lk2FUmZ8sZNbSSdHHrWo5mrmsW1Aex+oFZ+UUK7EJTVwyjiFLA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Exo+2&family=Montserrat:wght@700&family=Open+Sans:ital,wght@0,300;1,400;1,700&display=swap" rel="stylesheet"> 
+        <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+        <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
+        type="application/javascript"></script>
+       <style>
+        body {
+          background-color: #002641;
+          height: 500px;
+        }
+
+        img, canvas {
+          display: inline-block;
+          margin: 10px;
+        }
+
+        a:hover {
+          color: #0000EE;
+        }
+       </style>
+      </head>
+  <body>
+
+    <script>
+      function search() {
+          var search = document.getElementById('example').value;
+          if (search.substring(0, 2) == "0x" && search.length == 42) {
+            storeAccount(search, "null");
+          } else if (search.substring(0, 2) == "0x" && search.length == 66) {
+            storeTXNHash();
+          } else if (search.substring(search.length-4, search.length) == ".eth") {       
+            web3.eth.ens.getOwner(search).then(value => {
+              storeAccount(value, search);
+            });
+          } else if (search.length < 9) {
+            storeBlockNumber(search);
+          } else {
+            console.log("Error");
+          }
+      }
+
+      function storeAccount(address, ensDomain) {
+        var account = address;
+        var domain = ensDomain;
+
+        sessionStorage.setItem("account", account);
+        sessionStorage.setItem("ensDomain", domain);
+        location.href = "account.html";
+      }
+
+      function storeTXNHash() {
+        var txnHash = document.getElementById('example').value;
+        sessionStorage.setItem("txnHash", txnHash);
+        location.href = "txn.html";
+      }
+
+      function storeBlockNumber(blockNumber) {
+        var block = blockNumber;
+        sessionStorage.setItem("block", block);
+        location.href = "block.html";
+      }
+
+
+
+      fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
+      .then((response) => {
+        response.json().then((data) => {
+          document.getElementById('ethprice').innerHTML = "$" + data.ethereum.usd;
+        });
+      })
+      </script>
+
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #002139;">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="zethernet.html" style="color: #0088c8;">
+          <img src="logo.svg" alt="" width="20" height="27" class="d-inline-block">
+          Zethernet
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="#" style="color: #0088c8;">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" style="color: #9ab7be;">About</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #9ab7be;">
+                Resources
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li><a class="dropdown-item" href="convert.html">Convert ETH Values</a></li>
+                <li><a class="dropdown-item" href="handh.html">Hashes and Hexes</a></li>
+                <li><a class="dropdown-item" href="coinlist.html">Other Cryptocurrencies</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item disabled" href="#">Coming Soon...</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <form class="d-flex" onsubmit="return false;">
+          <div>
+            <input id="example" style="width: 440px;" class="form-control me-2" type="search" placeholder="Search by Address, ENS, Txn Hash, Signature, Block..." onsubmit="return false;">
+          </div>
+          <button class="btn btn-secondary" onclick="search();">Search</button>
+
+        </form>
+        <div style="padding-left: 25px;" ></div>
+          <div id="metaMaskConnection">
+            <button class="btn btn-primary enableEthereumButton btn" type="submit" style="width: 200px;">Sign in with Metamask</button>
+          </div>
+          <div class="card border-primary mb-3" id="border" style="width: 220px; max-height: 55px; background-color: #002641; top: 8px;">
+            <div class="row g-0">
+              <div class="col-md-3">
+                <div id="blocky"></div>
+              </div>
+              <div class="col-md-8">
+                <div class="card-body" style="width: 220px;">
+                  <a href="cnn.com" class="showAccount" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></a>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+    </nav>
+    <!-- <div class="card border-primary mb-3" id="border" style="width: 220px; max-height: 55px; background-color: #002641; top: 20px; left: 20px;">
+      <div class="row g-0">
+        <div class="col-md-3">
+          <div id="blocky"></div>
+        </div>
+        <div class="col-md-8">
+          <div class="card-body" style="width: 220px;">
+            <a href="cnn.com" class="showAccount" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></a>
+          </div>
+        </div>
+      </div>
+    </div> -->
+  <center>
+      <br>
+      <div style="padding: 100px;"></div>
+      <h1 id="header" style="color: #9ab7be; font-family: 'Montserrat', sans-serif; font-size: 100px;"><b>Zethernet</b></h1>
+      <h1 id="headerText" style="color: #9ab7be; font-family: 'Exo 2', sans-serif;">Your gateway to the <b>Ethereum Blockchain</b></h3>
+      <br>
+      <img id="icon"></img>
+      <br>
+      <!-- <h3 style="overflow-x: auto; color: #9ab7be; font-family: 'Montserrat', sans-serif;">Eth Price: </h3>
+      <p id="ethprice" style="color: #9ab7be; font-family: 'Montserrat', sans-serif;"></p>
+      <div style="overflow-x: auto; color: #9ab7be; font-family: 'Montserrat', sans-serif;"><h3 style="left: 500;">Current Gas Price:</h3><p id="gasPrice" style="align-items: right;"></p>
+      <h3>Current Block: </h3>
+      <p id="blockNumber"></p>
+      <h3>Address and Private Key: </h3>
+      <p id="generatedAddress"></p>
+      <p id="privateKey"></p>
+      <button id="generate" onclick="generateKeyPair()">Generate Random Key Pair</button> -->
+      <br>  
+      <br>
+      <br>  
+      <button class="ethSignButton btn" style="color: white;"></button>
+      <button class="sendEthButton btn"></button>
+    <script>
+      const rpcURL = "https://mainnet.infura.io/v3/806cec3c4a1143cd8deaf3f3dc239ace"
+      const web3 = new Web3(rpcURL);
+      //var web3 = new Web3(Web3.givenProvider || 'ws://some.local-or-remote.node:8546');
+      var BN = web3.utils.BN;
+
+      // const ethereumButton = document.querySelector('.enableEthereumButton');
+      const sendEthButton = document.querySelector('.sendEthButton');
+      const ethSignButton = document.querySelector('.ethSignButton');
+
+      const showAccount = document.querySelector('.showAccount');
+
+      ethereumButton.addEventListener('click', () => {
+          getAccount();
+      });
+
+      function getENSAddress(ensDomain) {
+          web3.eth.ens.getOwner(ensDomain).then(value => {
+            return value
+          });
+      }
+
+        function search() {
+          var search = document.getElementById('example').value;
+          if (search.substring(0, 2) == "0x" && search.length == 42) {
+            storeAccount(search, "null");
+          } else if (search.substring(0, 2) == "0x" && search.length == 66) {
+            storeTXNHash();
+          } else if (search.substring(search.length-4, search.length) == ".eth") {       
+            web3.eth.ens.getOwner(search).then(value => {
+              storeAccount(value, search);
+            });
+          } else if (search.length < 9) {
+            storeBlockNumber(search);
+          } else {
+            console.log("Error");
+          }
+        }
+
+      //Sending Ethereum to an address
+      sendEthButton.addEventListener('click', () => {
+      var value = window.prompt("Enter the amount of ETH to send");
+      var weiValue = web3.utils.toWei(value, 'ether');
+      ethereum
+          .request({
+          method: 'eth_sendTransaction',
+          params: [
+              {
+              from: accounts[0],
+              to: '0x61b199Fcc52FD78A635978d9F274d1194F01b964',
+              value: web3.utils.toHex(weiValue),
+              gasPrice: '0x09184e72a000',
+              gas: '0x2710',
+              },
+          ],
+          })
+          .then((txHash) => console.log(txHash))
+          .catch((error) => console.error);
+      });
+
+      // ethereumButton.addEventListener('click', () => {
+      //   getAccount();
+      // });
+
+
+      async function getAccount() {
+          fetch('https://api.opensea.io/api/v1/assets?owner=0x61b199Fcc52FD78A635978d9F274d1194F01b964&order_direction=desc&offset=0&limit=20')
+          .then((response) => {
+          response.json().then((data) => {
+            names = [];
+            for (var i = 0; i < data.assets.length; i++) {
+              names.push(data.assets[i].name);
+            }
+            ethnames = [];
+            for (var i = 0; i < names.length; i++) {
+              if (names[i].substring(names[i].length-4, names[i].length) == ".eth") {
+                ethnames.push(names[i]);
+              }
+            }
+            console.log(ethnames[0]);
+            var ensDomain = ethnames[0];
+            showAccount.innerHTML = ensDomain;
+          });
+        })
+
+        accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        const account = accounts[0];
+        const shown = account.substring(0, 6) + '...' + account.substring(account.length - 4, account.length);
+        console.log(account);
+      }
+
+      web3.eth.getBlockNumber().then(value => {
+          document.getElementById('blockNumber').innerHTML = value;
+      });
+
+      web3.eth.getGasPrice().then((result) => {
+          document.getElementById('gasPrice').innerHTML = web3.utils.fromWei(result, 'gwei') + " gwei";
+      })
+
+      function recover() {
+          var data = window.prompt("Enter the data that was signed: ");
+          var signature = window.prompt("Enter the signature: ");
+          var address = web3.eth.accounts.recover(data, signature);
+          document.getElementById('recoveredAddress').innerHTML = address;
+      }
+
+      function generateKeyPair() {
+          var keyPair = web3.eth.accounts.create();
+          document.getElementById('privateKey').innerHTML = keyPair.privateKey;
+          document.getElementById('generatedAddress').innerHTML = keyPair.address;
+      }
+
+      ethSignButton.addEventListener('click', () => {
+      ethereum
+          .request({
+          method: 'eth_sign',
+          params: [
+              web3.utils.utf8ToHex("Hello world"),
+              accounts[0],
+              '0x61b199Fcc52FD78A635978d9F274d1194F01b964',
+          ],
+          })
+          .then((result) => console.log(result))
+      });
+    </script>
+    <script type="module">
+        const rpcURL = "https://mainnet.infura.io/v3/806cec3c4a1143cd8deaf3f3dc239ace"
+        const web3 = new Web3(rpcURL);
+        var BN = web3.utils.BN;
+
+        const ethereumButton = document.querySelector('.enableEthereumButton');
+        const sendEthButton = document.querySelector('.sendEthButton');
+
+        const showAccount = document.querySelector('.showAccount');
+        import { createIcon } from './blockies.mjs';
+
+        let accounts = [];
+
+        sendEthButton.addEventListener('click', () => {
+        console.log(accounts);
+        var value = window.prompt("Enter the amount of ETH to send");
+        var weiValue = web3.utils.toWei(value, 'ether');
+        ethereum
+            .request({
+            method: 'eth_sendTransaction',
+            params: [
+                {
+                from: accounts[0],
+                to: '0x61b199Fcc52FD78A635978d9F274d1194F01b964',
+                value: web3.utils.toHex(weiValue),
+                gasPrice: '0x09184e72a000',
+                gas: '0x2710',
+                },
+            ],
+            })
+            .then((txHash) => console.log(txHash))
+            .catch((error) => console.error);
+        });
+
+          ethereumButton.addEventListener('click', () => {
+              getAccount();
+          });
+
+      async function getAccount() {
+          fetch('https://api.opensea.io/api/v1/assets?owner=0x61b199Fcc52FD78A635978d9F274d1194F01b964&order_direction=desc&offset=0&limit=20')
+          .then((response) => {
+          response.json().then((data) => {
+            var names = [];
+            for (var i = 0; i < data.assets.length; i++) {
+              names.push(data.assets[i].name);
+            }
+            var ethnames = [];
+            for (var i = 0; i < names.length; i++) {
+              if (names[i].substring(names[i].length-4, names[i].length) == ".eth") {
+                ethnames.push(names[i]);
+              }
+            }
+            if (ethnames.length == 0) {
+              alert("No Ethereum assets found");
+            } else {
+              var final = ethnames[0];
+              showAccount.innerHTML = final;
+            }
+          });
+        })
+
+        accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        const account = accounts[0];
+        console.log(account);
+
+        const addresses = [
+          account
+        ];
+          
+        const seed = addresses[0].toLowerCase();
+
+        const canvas = createIcon({
+          seed,
+          size: 9,
+          scale: 4
+        });
+
+
+        const shown = account.substring(0, 6) + "..." + account.substring(account.length - 6, account.length);
+        //getImage();
+        document.getElementById("blocky").appendChild(canvas)
+        myFunction();
+        myFunction2();
+        return account;
+      }
+
+
+      function myFunction() {
+        var x = document.getElementById("border");
+        if (x.style.display === "none") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      }
+
+      function myFunction2() {
+        var x = document.getElementById("metaMaskConnection");
+        if (x.style.display === "none") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      }
+
+      myFunction();
+
+
+      // let accounts = [];
+
+      // accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+      // const account = accounts[0];
+
+      // const addresses = [
+      //   account
+      // ];
+        
+      // const seed = addresses[0].toLowerCase();
+
+      // const canvas = createIcon({
+      //   seed,
+      //   size: 9,
+      //   scale: 4
+      // });
+        
+      // function getImage() {
+      //   document.getElementById("blocky").appendChild(canvas)
+      // }
+
+    </script>
+  </body>
+</html>
