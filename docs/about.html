@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js" integrity="sha512-hI8jEOQLtyzkIiWVygLAcKPradIhgXQUl8I3lk2FUmZ8sZNbSSdHHrWo5mrmsW1Aex+oFZ+UUK7EJTVwyjiFLA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Exo+2&family=Montserrat:wght@700&family=Open+Sans:ital,wght@0,300;1,400;1,700&display=swap" rel="stylesheet"> 
+        <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+        <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
+        type="application/javascript"></script>
+       <style>
+        body {
+          background-color: #002641;
+          height: 500px;
+        }
+
+        img, canvas {
+          display: inline-block;
+          margin: 10px;
+        }
+
+        a:hover {
+          color: #0000EE;
+        }
+       </style>
+      </head>
+  <body>
+
+    <script>
+      function search() {
+          var search = document.getElementById('example').value;
+          if (search.substring(0, 2) == "0x" && search.length == 42) {
+            storeAccount(search, "null");
+          } else if (search.substring(0, 2) == "0x" && search.length == 66) {
+            storeTXNHash();
+          } else if (search.substring(search.length-4, search.length) == ".eth") {       
+            web3.eth.ens.getOwner(search).then(value => {
+              storeAccount(value, search);
+            });
+          } else if (search.length < 9) {
+            storeBlockNumber(search);
+          } else {
+            console.log("Error");
+          }
+      }
+
+        function search(searchh) {
+          var search = searchh;
+          if (search.substring(0, 2) == "0x" && search.length == 42) {
+            storeAccount(search, "null");
+          } else if (search.substring(0, 2) == "0x" && search.length == 66) {
+            storeTXNHash();
+          } else if (search.substring(search.length-4, search.length) == ".eth") {       
+            web3.eth.ens.getOwner(search).then(value => {
+              storeAccount(value, search);
+            });
+          } else if (search.length < 9) {
+            storeBlockNumber(search);
+          } else {
+            console.log("Error");
+          }
+      }
+
+      function storeAccount(address, ensDomain) {
+        var account = address;
+        var domain = ensDomain;
+
+        sessionStorage.setItem("account", account);
+        sessionStorage.setItem("ensDomain", domain);
+        location.href = "account.html";
+      }
+
+      function storeTXNHash() {
+        var txnHash = document.getElementById('example').value;
+        sessionStorage.setItem("txnHash", txnHash);
+        location.href = "txn.html";
+      }
+
+      function storeBlockNumber(blockNumber) {
+        var block = blockNumber;
+        sessionStorage.setItem("block", block);
+        location.href = "block.html";
+      }
+
+
+
+      fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
+      .then((response) => {
+        response.json().then((data) => {
+          document.getElementById('ethprice').innerHTML = "$" + data.ethereum.usd;
+        });
+      })
+      </script>
+
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #002139;">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="index.html" style="color: #0088c8;">
+          <img src="logo.svg" alt="" width="20" height="27" class="d-inline-block">
+          Zethernet
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="index.html" style="color: #0088c8;">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html" style="color: #9ab7be;">About</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #9ab7be;">
+                Resources
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li><a class="dropdown-item" href="convert.html">Convert ETH Values</a></li>
+                <li><a class="dropdown-item" href="handh.html">Hashes and Hexes</a></li>
+                <li><a class="dropdown-item" href="coinlist.html">Other Cryptocurrencies</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item disabled" href="#">Coming Soon...</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <form class="d-flex" onsubmit="return false;">
+          <div>
+            <input id="example" style="width: 440px;" class="form-control me-2" type="search" placeholder="Search by Address, ENS, Txn Hash, Signature, Block..." onsubmit="return false;">
+          </div>
+          <button class="btn btn-secondary" onclick="search();">Search</button>
+        </form>
+      </div>
+    </nav>
+  <center>
+      <br>
+      <div style="padding: 100px;"></div>
+      <h1 id="header" style="color: #9ab7be; font-family: 'Montserrat', sans-serif; font-size: 70px;"><b>About</b></h1>
+      <h1 id="headerText" style="color: #9ab7be; font-family: 'Exo 2', sans-serif;">Coming soon...</h3>
+      <br>
+      <img id="icon"></img>
+      <br>
+    <script>
+      const rpcURL = "https://mainnet.infura.io/v3/806cec3c4a1143cd8deaf3f3dc239ace"
+      const web3 = new Web3(rpcURL);
+      //var web3 = new Web3(Web3.givenProvider || 'ws://some.local-or-remote.node:8546');
+      var BN = web3.utils.BN;
+
+    function search() {
+        var search = document.getElementById('example').value;
+        if (search.substring(0, 2) == "0x" && search.length == 42) {
+        storeAccount(search, "null");
+        } else if (search.substring(0, 2) == "0x" && search.length == 66) {
+        storeTXNHash();
+        } else if (search.substring(search.length-4, search.length) == ".eth") {       
+        web3.eth.ens.getOwner(search).then(value => {
+            storeAccount(value, search);
+        });
+        } else if (search.length < 9) {
+        storeBlockNumber(search);
+        } else {
+        console.log("Error");
+        }
+    }
+    </script>
+  </body>
+</html>
